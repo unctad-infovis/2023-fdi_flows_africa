@@ -177,7 +177,6 @@ function LineChart({
             duration: 3000
           },
           cursor: 'pointer',
-
           dataLabels: {
             allowOverlap: true,
             enabled: true,
