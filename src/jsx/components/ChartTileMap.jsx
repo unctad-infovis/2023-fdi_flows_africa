@@ -167,7 +167,7 @@ function LineChart({
             fontSize: '14px',
             fontWeight: 600
           },
-          text: 'Foreign direct investment<br />in Africa, million USD'
+          text: 'Foreign direct investment<br />in Africa, billion USD'
         },
         y: -90
       },
