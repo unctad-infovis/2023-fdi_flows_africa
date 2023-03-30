@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
 // Load helpers.
-import { transpose } from 'csv-transpose';
 import CSVtoJSON from './helpers/CSVtoJSON.js';
 import ChartLine from './components/ChartTileMap.jsx';
 
@@ -11,20 +10,11 @@ function Figure1() {
   // Data states.
   const [dataFigure, setDataFigure] = useState(false);
 
-  const cleanData = (data) => data.map((el, i) => {
-    const labels = Object.keys(el).filter(val => val !== 'Name').map(val => val);
-    const values = Object.values(el).map(val => parseFloat(val) * 100).filter(val => !Number.isNaN(val));
-    return ({
-      data: values.map((val, j) => ({
-        dataLabels: {
-          y: (i === 0) ? -10 : 30
-        },
-        name: labels[j],
-        y: val
-      })),
-      labels,
-      name: el.Name
-    });
+  const cleanData = (data) => data.map((el) => {
+    el.value = (el.value === 'null') ? -999 : parseFloat(el.value);
+    el.x = parseInt(el.x, 10);
+    el.y = parseInt(el.y, 10);
+    return el;
   });
 
   useEffect(() => {
@@ -37,7 +27,7 @@ function Figure1() {
           }
           return response.text();
         })
-        .then(body => setDataFigure(cleanData(CSVtoJSON(transpose(body)))));
+        .then(body => setDataFigure(cleanData(CSVtoJSON(body))));
     } catch (error) {
       console.error(error);
     }
@@ -49,13 +39,10 @@ function Figure1() {
       <ChartLine
         idx="1"
         data={dataFigure}
-        note=""
-        show_first_label
-        source=""
-        subtitle=""
-        suffix=""
-        title=""
-        ylabel=""
+        note="Data for Libya and Ivory Coast is missing"
+        source="UNCTAD"
+        subtitle="Foreign direct investments in Africa, billion USD, 2021"
+        title="Investments in Africa remain low in most countries"
       />
       )}
       <noscript>Your browser does not support JavaScript!</noscript>

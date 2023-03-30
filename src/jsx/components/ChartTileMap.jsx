@@ -2,10 +2,11 @@ import React, { useEffect, useCallback, useRef } from 'react';
 import PropTypes from 'prop-types';
 
 // https://www.highcharts.com/
-import Highcharts from 'highcharts';
+import Highcharts from 'highcharts/highmaps';
 import highchartsAccessibility from 'highcharts/modules/accessibility';
 import highchartsExporting from 'highcharts/modules/exporting';
 import highchartsExportData from 'highcharts/modules/export-data';
+import highchartsTileMap from 'highcharts/modules/tilemap';
 
 // https://www.npmjs.com/package/react-is-visible
 import 'intersection-observer';
@@ -16,6 +17,7 @@ import roundNr from '../helpers/RoundNr.js';
 highchartsAccessibility(Highcharts);
 highchartsExporting(Highcharts);
 highchartsExportData(Highcharts);
+highchartsTileMap(Highcharts);
 
 Highcharts.setOptions({
   lang: {
@@ -43,12 +45,11 @@ Highcharts.SVGRenderer.prototype.symbols.download = (x, y, w, h) => {
 };
 
 function LineChart({
-  allow_decimals, data, idx, line_width, note, show_first_label, source, subtitle, suffix, title
+  data, idx, note, source, subtitle, title
 }) {
   const chartRef = useRef();
   const isVisible = useIsVisible(chartRef, { once: true });
 
-  const chartHeight = 700;
   const createChart = useCallback(() => {
     Highcharts.chart(`chartIdx${idx}`, {
       caption: {
@@ -69,27 +70,9 @@ function LineChart({
           load() {
             // eslint-disable-next-line react/no-this-in-sfc
             this.renderer.image('https://unctad.org/sites/default/files/2022-11/unctad_logo.svg', 20, 15, 80, 100).add();
-            setTimeout(() => {
-              // eslint-disable-next-line react/no-this-in-sfc
-              this.series.forEach((series) => {
-                series.points[series.points.length - 1].update({
-                  dataLabels: {
-                    enabled: true,
-                    y: series.points[series.points.length - 1].options.dataLabels.y
-                  }
-                });
-                series.points[0].update({
-                  dataLabels: {
-                    enabled: true,
-                    y: series.points[0].options.dataLabels.y
-                  }
-                });
-              });
-            }, 2800);
           }
         },
-        marginLeft: 70,
-        height: chartHeight,
+        height: '125%',
         resetZoomButton: {
           theme: {
             fill: '#fff',
@@ -117,10 +100,39 @@ function LineChart({
           fontFamily: 'Roboto',
           fontWeight: 400
         },
-        type: 'tilemap',
-        zoomType: 'x'
+        type: 'tilemap'
       },
-      colors: ['#72bf44', '#009edb'],
+      colorAxis: {
+        dataClasses: [{
+          to: -900,
+          color: '#fff',
+          name: 'Unknown'
+        }, {
+          from: -900,
+          to: 0.5,
+          color: '#9c9e9f',
+          name: 'Below $0.5 bn'
+        }, {
+          from: 0.5,
+          to: 1,
+          color: '#fabc72',
+          name: '$0.5 to 1.0 bn'
+        }, {
+          from: 1,
+          to: 2,
+          color: '#f18e00',
+          name: '$1.0 to $1.9 bn'
+        }, {
+          from: 2,
+          to: 3,
+          color: '#6dbfa9',
+          name: '$2.0 to $2.9 bn'
+        }, {
+          from: 3,
+          color: '#009473',
+          name: 'Above $3.0 bn'
+        }]
+      },
       credits: {
         enabled: false
       },
@@ -135,9 +147,9 @@ function LineChart({
         }
       },
       legend: {
-        align: 'right',
-        enabled: (data.length > 1),
-        itemDistance: 20,
+        align: 'left',
+        enabled: true,
+        floating: true,
         itemStyle: {
           color: '#000',
           cursor: 'default',
@@ -145,28 +157,37 @@ function LineChart({
           fontSize: '14px',
           fontWeight: 400
         },
-        layout: 'horizontal',
-        verticalAlign: 'top'
+        layout: 'vertical',
+        reversed: true,
+        title: {
+          style: {
+            color: '#000',
+            cursor: 'default',
+            fontFamily: 'Roboto',
+            fontSize: '14px',
+            fontWeight: 600
+          },
+          text: 'Foreign direct investment<br />in Africa, million USD'
+        },
+        y: -90
       },
       plotOptions: {
-        line: {
+        series: {
           animation: {
             duration: 3000
           },
           cursor: 'pointer',
+
           dataLabels: {
             allowOverlap: true,
-            enabled: false,
-            formatter() {
-              // eslint-disable-next-line react/no-this-in-sfc
-              return `<span style="color: ${this.color}">${roundNr(this.y, 0).toLocaleString('en-US')}${suffix}</div>`;
-            },
+            enabled: true,
+            format: '{point.iso-a3}',
             style: {
               color: 'rgba(0, 0, 0, 0.8)',
               fontFamily: 'Roboto',
-              fontSize: '18px',
+              fontSize: '16px',
               fontWeight: 400,
-              textOutline: '2px solid #fff'
+              textOutline: 'none'
             }
           },
           events: {
@@ -177,65 +198,60 @@ function LineChart({
               return false;
             }
           },
-          selected: true,
-          lineWidth: line_width,
-          marker: {
-            enabled: false,
-            radius: 0,
-            states: {
-              hover: {
-                animation: false,
-                enabled: false,
-                radius: 8
-              }
-            },
-            symbol: 'circle'
-          },
           states: {
             hover: {
               halo: {
-                size: 0
-              },
-              enabled: false,
-              lineWidth: line_width
+                size: 1
+              }
             }
-          }
+          },
+          // Possible values are hexagon, circle, diamond, and square.
+          tileShape: 'circle'
         }
       },
       responsive: {
         rules: [{
           chartOptions: {
-            title: {
-              margin: 40
+            chart: {
+              height: '150%'
+            },
+            plotOptions: {
+              series: {
+                dataLabels: {
+                  style: {
+                    fontSize: '14px'
+                  }
+                }
+              }
             }
           },
           condition: {
-            maxWidth: 630
+            maxWidth: 600
           }
         }, {
           chartOptions: {
             chart: {
-              height: 700
+              height: '175%'
             },
             legend: {
               layout: 'horizontal'
             },
+            plotOptions: {
+              series: {
+                dataLabels: {
+                  style: {
+                    fontSize: '12px'
+                  }
+                }
+              }
+            },
             title: {
-              margin: 40,
+              margin: 0,
               style: {
                 fontSize: '26px',
                 lineHeight: '30px'
               }
-            },
-            yAxis: [{
-              title: {
-                text: null
-              }
-            }, {
-              title: {
-                text: null
-              }
-            }]
+            }
           },
           condition: {
             maxWidth: 500
@@ -243,15 +259,29 @@ function LineChart({
         }, {
           chartOptions: {
             chart: {
-              height: 800
-            }
+              height: 700
+            },
+            plotOptions: {
+              series: {
+                dataLabels: {
+                  style: {
+                    fontSize: '10px'
+                  }
+                }
+              }
+            },
+            title: {
+              margin: 0
+            },
           },
           condition: {
             maxWidth: 400
           }
         }]
       },
-      series: data,
+      series: [{
+        data
+      }],
       subtitle: {
         align: 'left',
         enabled: true,
@@ -265,9 +295,15 @@ function LineChart({
         widthAdjust: -100,
         x: 100
       },
+      xAxis: {
+        visible: false
+      },
+      yAxis: {
+        visible: false
+      },
       title: {
         align: 'left',
-        margin: 40,
+        margin: 0,
         style: {
           color: '#000',
           fontSize: '30px',
@@ -283,87 +319,18 @@ function LineChart({
         borderColor: '#ccc',
         borderRadius: 0,
         borderWidth: 1,
-        crosshairs: true,
+        pointFormat: '{point.name}: <strong>{point.value}</strong>',
         formatter() {
           // eslint-disable-next-line react/no-this-in-sfc
-          const values = this.points.filter(point => point.series.name !== '').map(point => [point.series.name.split(' (')[0], point.y, point.color]);
-          const rows = [];
-          rows.push(values.map(point => `<div><span class="tooltip_label" style="color: ${point[2]}">${(point[0]) ? `${point[0]}: ` : ''}</span><span class="tooltip_value">${roundNr(point[1], 1).toFixed(1).toLocaleString('en-US')}${suffix}</span></div>`).join(''));
-          // eslint-disable-next-line react/no-this-in-sfc
-          return `<div class="tooltip_container"><h3 class="tooltip_header">${this.x}</h3>${rows}</div>`;
+          return `<div class="tooltip_container"><h3 class="tooltip_header">${this.key}</h3><div><span class="tooltip_label"></span><span class="tooltip_value">${(this.point.value !== -999) ? `${roundNr(this.point.value, 1).toFixed(1).toLocaleString('en-US')} billion USD` : 'Unknown'}</span></div></div>`;
         },
         shadow: false,
         shared: true,
         useHTML: true
-      },
-      xAxis: {
-        allowDecimals: false,
-        crosshair: {
-          color: '#ccc',
-          width: 1
-        },
-        categories: data[0].labels,
-        labels: {
-          allowOverlap: false,
-          enabled: true,
-          style: {
-            color: 'rgba(0, 0, 0, 0.8)',
-            fontFamily: 'Roboto',
-            fontSize: '14px',
-            fontWeight: 400
-          },
-          formatter: (val) => (val.value).split(' ')[0],
-          rotation: 0,
-          reserveSpace: true,
-          useHTML: false,
-          y: 25
-        },
-        lineColor: '#ccc',
-        lineWidth: 1,
-        opposite: false,
-        tickInterval: 1,
-        tickLength: 5,
-        tickWidth: 1,
-        title: {
-          text: null
-        },
-        type: 'category'
-      },
-      yAxis: {
-        allowDecimals: allow_decimals,
-        gridLineColor: 'rgba(124, 112, 103, 0.2)',
-        gridLineDashStyle: 'shortdot',
-        gridLineWidth: 1,
-        labels: {
-          format: '{text}',
-          reserveSpace: true,
-          style: {
-            color: '#000',
-            fontFamily: 'Roboto',
-            fontSize: '16px',
-            fontWeight: 400
-          }
-        },
-        lineColor: 'transparent',
-        lineWidth: 0,
-        max: 105,
-        min: 98,
-        plotLines: [{
-          color: 'rgba(124, 112, 103, 0.6)',
-          value: 100,
-          width: 1
-        }],
-        opposite: false,
-        showFirstLabel: show_first_label,
-        showLastLabel: true,
-        title: {
-          text: null
-        },
-        type: 'linear'
       }
     });
     chartRef.current.querySelector(`#chartIdx${idx}`).style.opacity = 1;
-  }, [allow_decimals, data, idx, line_width, note, show_first_label, source, subtitle, suffix, title]);
+  }, [data, idx, note, source, subtitle, title]);
 
   useEffect(() => {
     if (isVisible === true) {
@@ -384,25 +351,17 @@ function LineChart({
 }
 
 LineChart.propTypes = {
-  allow_decimals: PropTypes.bool,
   data: PropTypes.instanceOf(Array).isRequired,
   idx: PropTypes.string.isRequired,
-  line_width: PropTypes.number,
   note: PropTypes.string,
-  show_first_label: PropTypes.bool,
   source: PropTypes.string.isRequired,
   subtitle: PropTypes.string,
-  suffix: PropTypes.string,
   title: PropTypes.string.isRequired,
 };
 
 LineChart.defaultProps = {
-  allow_decimals: true,
-  line_width: 5,
   note: '',
-  show_first_label: true,
   subtitle: false,
-  suffix: ''
 };
 
 export default LineChart;
