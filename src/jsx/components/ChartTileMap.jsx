@@ -45,7 +45,7 @@ Highcharts.SVGRenderer.prototype.symbols.download = (x, y, w, h) => {
 };
 
 function LineChart({
-  data, idx, note, source, subtitle, title
+  data, idx, note = '', source, subtitle = false, title
 }) {
   const chartRef = useRef();
   const isVisible = useIsVisible(chartRef, { once: true });
@@ -356,11 +356,6 @@ LineChart.propTypes = {
   source: PropTypes.string.isRequired,
   subtitle: PropTypes.string,
   title: PropTypes.string.isRequired,
-};
-
-LineChart.defaultProps = {
-  note: '',
-  subtitle: false,
 };
 
 export default LineChart;
